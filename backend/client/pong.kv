@@ -1,0 +1,181 @@
+
+# MENU PRINCIPAL : choix du mode
+
+<ModeMenuScreen>:
+    AnchorLayout:
+        Card:
+            size_hint: None, None
+            size: dp(380), dp(400)
+
+            TitleLabel:
+                id: welcome_label
+                font_size: dp(26)
+            TextLabel:
+                id: level_label
+            Widget:
+                size_hint_y: None
+                height: dp(6)
+            TealButton:
+                text: 'Mode Solo : les 5 défis'
+                on_release: root.manager.current = 'challenges'
+            TealButton:
+                text: 'Mode 2 joueurs (local)'
+                on_release: root.start_two_players()
+            Widget:
+            CoralButton:
+                text: 'Se déconnecter'
+                on_release: root.logout()
+
+
+# MENU DES DÉFIS
+
+
+# Bouton de défi : texte aligné à gauche avec une place pour le cadenas.
+# Le texte est centré dans une zone plus étroite (text_size) : une marge de 54dp
+# de chaque côté, et halign 'left' le colle au bord gauche de cette zone.
+# Le cadenas (anse puis corps) n'est dessiné que si le bouton est désactivé.
+<LevelButton>:
+    height: dp(46)
+    halign: 'left'
+    valign: 'middle'
+    text_size: self.width - dp(108), self.height
+    font_size: dp(17)
+    canvas.after:
+        Color:
+            rgba: theme.TEAL if self.disabled else [0, 0, 0, 0]
+        Line:
+            rounded_rectangle: (self.x + dp(23), self.y + dp(14), dp(12), dp(18), dp(6))
+            width: dp(1.8)
+        RoundedRectangle:
+            pos: self.x + dp(20), self.y + dp(11)
+            size: dp(18), dp(14)
+            radius: [dp(3)]
+
+<ChallengesScreen>:
+    AnchorLayout:
+        Card:
+            size_hint: None, None
+            size: dp(460), dp(480)
+            spacing: dp(12)
+
+            TitleLabel:
+                text: 'Choisis ton défi'
+                font_size: dp(28)
+                height: dp(44)
+            TextLabel:
+                id: progress_label
+                height: dp(28)
+
+            # Rempli par ChallengesScreen.on_pre_enter (5 boutons).
+            BoxLayout:
+                id: levels_box
+                orientation: 'vertical'
+                spacing: dp(10)
+                size_hint_y: None
+                height: dp(270)
+
+            Widget:
+            CoralButton:
+                text: 'Retour'
+                height: dp(46)
+                on_release: root.manager.current = 'mode_menu'
+
+
+# ÉCRAN DE JEU
+
+<GameScreen>:
+    FloatLayout:
+        id: stack   # les cartes (victoire, Game Over, pause) sont ajoutées ici, par-dessus
+
+        BoxLayout:
+            orientation: 'vertical'
+            padding: dp(20), dp(12), dp(20), dp(8)
+            spacing: dp(8)
+
+            # Barre du haut : noms des joueurs et score
+            BoxLayout:
+                size_hint_y: None
+                height: dp(54)
+                Label:
+                    id: left_name
+                    color: theme.TEAL
+                    bold: True
+                    font_size: dp(18)
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                Label:
+                    text: '%d  :  %d' % (field.score_left, field.score_right)
+                    color: theme.TEAL
+                    bold: True
+                    font_size: dp(40)
+                    size_hint_x: None
+                    width: dp(170)
+                Label:
+                    id: right_name
+                    color: theme.TEAL
+                    bold: True
+                    font_size: dp(18)
+                    halign: 'right'
+                    valign: 'middle'
+                    text_size: self.size
+
+            PongField:
+                id: field
+                on_match_end: root.on_match_end(args[1])
+
+            Label:
+                id: hint_label
+                color: theme.TEAL_SOFT
+                font_size: dp(13)
+                size_hint_y: None
+                height: dp(22)
+
+# Carte de fin de manche / pause : voile beige + carte blanche au centre.
+<ResultOverlay>:
+    canvas.before:
+        Color:
+            rgba: theme.BEIGE[:3] + [0.85]
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    Card:
+        size_hint: None, None
+        size: dp(420), dp(330)
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        spacing: dp(12)
+
+        Label:
+            text: root.title
+            color: root.accent
+            bold: True
+            font_size: dp(34)
+            size_hint_y: None
+            height: dp(50)
+        Label:
+            text: root.message
+            color: theme.TEAL
+            font_size: dp(16)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+        BoxLayout:
+            size_hint_y: None
+            height: dp(50)
+            spacing: dp(12)
+            TealButton:
+                text: root.text_a
+                on_release: root.dispatch('on_a')
+            CoralButton:
+                text: root.text_b
+                disabled: root.disabled_b
+                on_release: root.dispatch('on_b')
+        # Bouton discret, invisible (et sans place) quand text_c est vide.
+        ThemedButton:
+            text: root.text_c
+            bg_color: theme.TEAL_PALE
+            color: theme.TEAL
+            disabled: not root.text_c
+            opacity: 1 if root.text_c else 0
+            height: dp(46) if root.text_c else 0
+            on_release: root.dispatch('on_c')
